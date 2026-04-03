@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeri Produk Bootstrap 5</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            padding: 40px 15px;
+        }
+
+        .card-product {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 850px;
+            margin: auto;
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background-color: #ffffff;
+            border-bottom: 1px solid #edf2f7;
+            padding: 25px;
+        }
+
+        .product-title {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #1a202c;
+            margin: 0;
+        }
+
+        .image-section-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .image-section-label::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+            margin-left: 15px;
+        }
+
+        .gallery-container {
+            background-color: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        /* Gaya Item Galeri */
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 10px;
+            background-color: #edf2f7;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-color: #cbd5e0;
+            z-index: 1;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .status-pill {
+            padding: 0.4em 1em;
+            font-weight: 600;
+            border-radius: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card card-product">
+            <!-- Pengepala Kad -->
+            <div class="card-header-custom d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h1 class="product-title">
+                        <span class="text-primary">PRD-102</span>
+                        <span class="mx-2 text-muted opacity-50">/</span>
+                        <span>Koleksi Gadget Premium</span>
+                    </h1>
+                </div>
+                <span class="badge bg-success-subtle text-success status-pill shadow-sm">Aktif</span>
+            </div>
+
+            <!-- Kandungan Kad -->
+            <div class="card-body p-4">
+                
+                <!-- Galeri Imej Asal -->
+                <div class="mb-5">
+                    <div class="image-section-label">Original Images</div>
+                    <div class="gallery-container">
+                        <div class="row g-3">
+                            <!-- Contoh 6 Imej Asal -->
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop" alt="Original 1"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop" alt="Original 2"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1526170315873-3a561629923d?w=200&h=200&fit=crop" alt="Original 3"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=200&h=200&fit=crop" alt="Original 4"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1484704849700-f032a568e944?w=200&h=200&fit=crop" alt="Original 5"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&h=200&fit=crop" alt="Original 6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Galeri Imej Rendered -->
+                <div class="mb-4">
+                    <div class="image-section-label">Rendered Images</div>
+                    <div class="gallery-container">
+                        <div class="row g-3">
+                            <!-- Contoh 6 Imej Hasil Render -->
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=200&h=200&fit=crop" alt="Rendered 1"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1584908066896-003602951e92?w=200&h=200&fit=crop" alt="Rendered 2"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&h=200&fit=crop" alt="Rendered 3"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1503602642458-232111445657?w=200&h=200&fit=crop" alt="Rendered 4"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=200&h=200&fit=crop" alt="Rendered 5"></div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <div class="gallery-item"><img src="https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=200&h=200&fit=crop" alt="Rendered 6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
