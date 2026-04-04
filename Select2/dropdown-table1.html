@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select2 Multi-Column Dropdown</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- Select2 Bootstrap 5 Theme CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+    <style>
+        body {
+            background-color: #f4f7f6;
+            padding-top: 60px;
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            max-width: 850px;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        
+        /* Penyesuaian lebar dropdown agar muat kolom tabel */
+        .select2-container--bootstrap-5 .select2-dropdown {
+            min-width: 500px !important; 
+            border: 1px solid #dee2e6;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        /* Header Tabel di dalam List Dropdown */
+        .select2-table-header {
+            display: flex;
+            background: #212529;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 12px 15px;
+            font-size: 0.85rem;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+
+        /* Styling baris item (Row) */
+        .row-item {
+            display: flex;
+            width: 100%;
+            padding: 8px 0;
+            align-items: center;
+        }
+        
+        /* Pengaturan kolom menggunakan Flexbox */
+        .col-nama { flex-grow: 1; font-weight: 500; }
+        .col-kat  { width: 140px; flex-shrink: 0; color: #6c757d; font-size: 0.85rem; }
+        .col-stok { width: 80px; flex-shrink: 0; text-align: right; }
+
+        /* Interaksi saat hover/highlight */
+        .select2-results__option--highlighted .col-kat {
+            color: rgba(255,255,255,0.8) !important;
+        }
+
+        .result-display {
+            background: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-dark">Manajemen Inventaris</h2>
+        <p class="text-muted">Pilih produk menggunakan fitur pencarian multi-kolom</p>
+    </div>
+    
+    <form id="formProduk">
+        <div class="mb-4">
+            <label for="select-produk" class="form-label fw-bold">Pilih Produk</label>
+            <select class="form-select" id="select-produk" name="id_produk" data-placeholder="Cari berdasarkan nama produk atau kategori...">
+                <option></option>
+                <!-- ID disimpan di value, data tambahan di atribut data-* -->
+                <option value="ID-101" data-kat="Elektronik" data-stok="15">MacBook Pro M3</option>
+                <option value="ID-102" data-kat="Elektronik" data-stok="4">Samsung Galaxy S24</option>
+                <option value="ID-201" data-kat="Furnitur" data-stok="25">Kursi Ergonomis</option>
+                <option value="ID-202" data-kat="Furnitur" data-stok="10">Meja Lipat Minimalis</option>
+                <option value="ID-301" data-kat="Peralatan" data-stok="60">Obeng Elektrik</option>
+                <option value="ID-302" data-kat="Peralatan" data-stok="3">Gergaji Mesin</option>
+                <option value="ID-401" data-kat="Hobi" data-stok="12">Kamera Mirrorless</option>
+            </select>
+            <div class="form-text mt-2">
+                Tips: Coba ketik "Elektronik" atau nama barang tertentu.
+            </div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg shadow-sm">Simpan Pilihan</button>
+        </div>
+    </form>
+
+    <!-- Box untuk melihat hasil yang dilempar ke backend -->
+    <div id="debug-box" class="mt-5 p-4 rounded result-display d-none">
+        <h6 class="fw-bold text-primary mb-3">Payload yang dikirim ke Backend:</h6>
+        <div class="bg-white p-3 border rounded">
+            <pre id="json-output" class="mb-0 text-dark"></pre>
+        </div>
+        <div class="mt-2 text-muted" style="font-size: 0.8rem;">
+            * ID produk diambil dari nilai properti 'value' pada elemen select.
+        </div>
+    </div>
+</div>
+
+<!-- Scripts: JQuery, Select2, Bootstrap -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        
+        /**
+         * Custom Matcher:
+         * Memungkinkan pencarian pada Nama Produk (text) dan Kategori (data-kat)
+         */
+        function customMatcher(params, data) {
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+
+            const term = params.term.toLowerCase();
+            const productName = data.text.toLowerCase();
+            const category = $(data.element).data('kat') ? $(data.element).data('kat').toLowerCase() : '';
+
+            if (productName.indexOf(term) > -1 || category.indexOf(term) > -1) {
+                return data;
+            }
+
+            return null;
+        }
+
+        /**
+         * Custom Template:
+         * Merender baris dropdown dalam format tabel (Nama, Kategori, Stok)
+         */
+        function formatResultAsTable(state) {
+            if (!state.id) return state.text;
+
+            const kat = $(state.element).data('kat');
+            const stok = $(state.element).data('stok');
+            
+            // Logika pewarnaan stok tipis
+            const stokBadge = stok <= 5 ? 
+                `<span class="badge bg-danger rounded-pill">${stok}</span>` : 
+                `<span class="text-dark fw-bold">${stok}</span>`;
+
+            return $(
+                '<div class="row-item">' +
+                    '<div class="col-nama">' + state.text + '</div>' +
+                    '<div class="col-kat">' + kat + '</div>' +
+                    '<div class="col-stok">' + stokBadge + '</div>' +
+                '</div>'
+            );
+        }
+
+        /**
+         * Inisialisasi Select2
+         */
+        const $productSelect = $('#select-produk').select2({
+            theme: "bootstrap-5",
+            placeholder: $('#select-produk').data('placeholder'),
+            allowClear: true,
+            matcher: customMatcher,
+            templateResult: formatResultAsTable,
+            templateSelection: function(data) {
+                // Saat terpilih, hanya tampilkan nama produknya saja
+                return data.text;
+            },
+            escapeMarkup: function(m) { return m; }
+        });
+
+        /**
+         * Menambahkan Header Tabel secara dinamis saat dropdown dibuka
+         */
+        $productSelect.on('select2:open', function() {
+            if ($('.select2-table-header').length === 0) {
+                $('.select2-results').prepend(
+                    '<div class="select2-table-header">' +
+                        '<div style="flex-grow: 1;">Nama Produk</div>' +
+                        '<div style="width: 140px">Kategori</div>' +
+                        '<div style="width: 80px; text-align: right;">Stok</div>' +
+                    '</div>'
+                );
+            }
+        });
+
+        /**
+         * Event Submit Form
+         */
+        $('#formProduk').on('submit', function(e) {
+            e.preventDefault();
+            const selectedID = $('#select-produk').val(); 
+            
+            if(!selectedID) {
+                alert("Mohon pilih produk terlebih dahulu.");
+                return;
+            }
+
+            const dataToBackend = {
+                id_produk: selectedID, // Ini adalah ID yang dikirim (misal: ID-101)
+                action: "process_order",
+                timestamp: new Date().toISOString()
+            };
+
+            $('#debug-box').removeClass('d-none');
+            $('#json-output').text(JSON.stringify(dataToBackend, null, 4));
+            
+            // Scroll otomatis ke hasil
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
+    });
+</script>
+
+</body>
+</html>
