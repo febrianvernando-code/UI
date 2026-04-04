@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilih Data & Tampilkan Tabel - Bootstrap 5</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Select2 CSS & JS -->
+    <link href="https://cdn. Taylor.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Tabulator CSS & JS -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .main-card {
+            margin-top: 50px;
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        /* PERBAIKAN TAMPILAN SELECT2 */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #dee2e6;
+            height: 45px;
+            padding: 8px 12px;
+            border-radius: 0.375rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            color: #212529;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 43px;
+        }
+
+        /* Container Dropdown */
+        .select2-dropdown {
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 450px !important;
+        }
+
+        /* Row Tabel di Dropdown */
+        .dropdown-item-row {
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+            width: 100%;
+        }
+
+        .col-code { 
+            width: 100px; 
+            font-weight: 600;
+            color: #0d6efd;
+            flex-shrink: 0;
+            border-right: 1px solid #eee;
+            margin-right: 15px;
+        }
+
+        .col-name { 
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Header Dropdown */
+        .select2-results__header {
+            background-color: #f1f3f5;
+            padding: 8px 12px;
+            display: flex;
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: #495057;
+            text-transform: uppercase;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        /* Menghilangkan padding default Select2 agar tabel penuh */
+        .select2-results__option {
+            padding: 8px 12px !important;
+        }
+        
+        #data-table {
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card main-card">
+                    <div class="card-body p-4">
+                        <h2 class="card-title text-center mb-4 fw-bold">Sistem Seleksi Kategori</h2>
+                        
+                        <!-- Bagian Seleksi -->
+                        <div class="mb-4">
+                            <label for="dataSelector" class="form-label fw-semibold">Pilih Kategori:</label>
+                            <select id="dataSelector" class="form-select w-100">
+                                <option value=""></option>
+                                <!-- Value adalah ID backend, data-code adalah kode tampilan -->
+                                <option value="101" data-code="CAT001">Peralatan Elektronik</option>
+                                <option value="102" data-code="CAT002">Pakaian & Fashion</option>
+                                <option value="103" data-code="CAT003">Makanan & Minuman</option>
+                                <option value="104" data-code="CAT004">Suku Cadang Otomotif</option>
+                                <option value="105" data-code="CAT005">Perabotan Rumah Tangga</option>
+                            </select>
+                            <div class="form-text mt-2 text-muted">
+                                <strong>Pencarian:</strong> Ketik kode (misal: 001) atau nama (misal: Elektronik). Sistem akan memproses berdasarkan ID.
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Wadah Tabel Tabulator -->
+                        <div id="table-container" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <h5 id="tableTitle" class="mb-0 text-primary text-uppercase fw-bold">Daftar Produk</h5>
+                                    <span id="categoryBadge" class="badge bg-dark ms-2"></span>
+                                </div>
+                                <button id="download-csv" class="btn btn-outline-success btn-sm">
+                                    Unduh CSV
+                                </button>
+                            </div>
+                            <div id="data-table"></div>
+                        </div>
+
+                        <!-- Pesan Kosong -->
+                        <div id="empty-state" class="text-center py-5 text-secondary">
+                            <p class="fs-6 mt-3 italic">Pilih kategori untuk memuat data tabel dari "backend" menggunakan ID.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Simulasi data backend yang dipetakan berdasarkan ID (bukan string nama)
+        const mockDataByCategoryId = {
+            "101": [
+                { id: 1, nama: "Laptop Pro", merk: "TechCo", harga: 15000000, stok: 5 },
+                { id: 2, nama: "Smartphone X", merk: "MobileGen", harga: 8000000, stok: 12 },
+                { id: 3, nama: "Monitor 4K", merk: "Vision", harga: 4500000, stok: 8 }
+            ],
+            "102": [
+                { id: 10, nama: "Kaos Polos", merk: "BasicWear", harga: 75000, stok: 50 },
+                { id: 11, nama: "Jaket Denim", merk: "UrbanStyle", harga: 350000, stok: 15 }
+            ],
+            "103": [
+                { id: 20, nama: "Kopi Arabika", merk: "BeanJava", harga: 120000, stok: 30 },
+                { id: 21, nama: "Cokelat Hitam", merk: "SweetBite", harga: 45000, stok: 100 }
+            ],
+            "104": [
+                { id: 30, nama: "Oli Mesin", merk: "Castrol", harga: 95000, stok: 20 },
+                { id: 31, nama: "Ban Motor", merk: "Michelin", harga: 450000, stok: 10 }
+            ],
+            "105": [
+                { id: 40, nama: "Meja Kayu", merk: "IKEA", harga: 1200000, stok: 4 },
+                { id: 41, nama: "Lampu Tidur", merk: "Philips", harga: 150000, stok: 25 }
+            ]
+        };
+
+        let table; 
+
+        $(document).ready(function() {
+            /**
+             * MATCHER KUSTOM:
+             * Memungkinkan pencarian berdasarkan Teks Label dan Atribut data-code
+             */
+            function customMatcher(params, data) {
+                if ($.trim(params.term) === '') {
+                    return data;
+                }
+
+                if (typeof data.children !== 'undefined') {
+                    return null;
+                }
+
+                const term = params.term.toLowerCase();
+                const text = data.text.toLowerCase();
+                // Mengambil data-code dari elemen DOM asli
+                const code = $(data.element).data('code') ? $(data.element).data('code').toString().toLowerCase() : '';
+
+                // Cocokkan term dengan nama kategori ATAU kode kategori
+                if (text.indexOf(term) > -1 || code.indexOf(term) > -1) {
+                    return data;
+                }
+
+                return null;
+            }
+
+            // Fungsi Render Baris Dropdown (Tampilan Tabel)
+            function formatCategory(state) {
+                if (!state.id) return state.text;
+
+                const code = $(state.element).data('code') || 'N/A';
+                const name = state.text;
+
+                return $(
+                    `<div class="dropdown-item-row">
+                        <div class="col-code">${code}</div>
+                        <div class="col-name">${name}</div>
+                    </div>`
+                );
+            }
+
+            // Fungsi Render Seleksi Terpilih (Menampilkan Kode - Nama)
+            function formatSelection(state) {
+                if (!state.id) return "Cari Kategori...";
+                const code = $(state.element).data('code');
+                return `<strong>${code}</strong> — ${state.text}`;
+            }
+
+            // Inisialisasi Select2
+            $('#dataSelector').select2({
+                placeholder: "Cari Kode atau Nama...",
+                allowClear: true,
+                matcher: customMatcher,
+                templateResult: formatCategory,
+                templateSelection: formatSelection,
+                escapeMarkup: function(m) { return m; },
+                width: '100%'
+            });
+
+            // Menyisipkan Header Tabel secara dinamis saat dropdown dibuka
+            $('#dataSelector').on('select2:open', function() {
+                setTimeout(() => {
+                    if ($('.select2-results__header').length === 0) {
+                        $('.select2-results').prepend(
+                            `<div class="select2-results__header">
+                                <div style="width: 100px; margin-right: 15px;">KODE</div>
+                                <div>NAMA KATEGORI</div>
+                            </div>`
+                        );
+                    }
+                }, 0);
+            });
+
+            // Listener Perubahan: val() akan mengembalikan ID (101, 102, dst)
+            $('#dataSelector').on('change', function() {
+                const categoryId = $(this).val(); 
+                
+                if (categoryId) {
+                    const code = $(this).find(':selected').data('code');
+                    const name = $(this).find(':selected').text();
+                    
+                    console.log("Mengirim ke backend ID:", categoryId); // Bukti ID yang digunakan
+                    showData(categoryId, code, name);
+                } else {
+                    $('#table-container').hide();
+                    $('#empty-state').show();
+                }
+            });
+
+            // Menampilkan data di Tabulator berdasarkan ID Kategori
+            function showData(id, code, name) {
+                const data = mockDataByCategoryId[id] || [];
+                $('#empty-state').hide();
+                $('#table-container').fadeIn();
+                $('#categoryBadge').text(`ID: ${id} | ${code}`);
+
+                if (table) {
+                    table.setData(data);
+                } else {
+                    table = new Tabulator("#data-table", {
+                        data: data,
+                        layout: "fitColumns",
+                        placeholder: "Tidak ada produk dalam kategori ini",
+                        columns: [
+                            {title: "ID Produk", field: "id", width: 100, hozAlign: "center"},
+                            {title: "Nama Produk", field: "nama", headerFilter: "input"},
+                            {title: "Merek", field: "merk"},
+                            {title: "Harga", field: "harga", formatter: "money", formatterParams: {symbol: "Rp ", thousand: ".", decimal: ","}},
+                            {title: "Stok", field: "stok", hozAlign: "center", formatter: (cell) => {
+                                const val = cell.getValue();
+                                return `<span class="badge ${val < 10 ? 'bg-danger' : 'bg-success'}">${val}</span>`;
+                            }}
+                        ]
+                    });
+                }
+            }
+
+            $('#download-csv').click(() => table && table.download("csv", "export_data.csv"));
+        });
+    </script>
+</body>
+</html>
