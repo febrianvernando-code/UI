@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajer Gambar Produk - Elegan</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- PhotoSwipe CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.min.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f9fafb;
+            --card-border: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .main-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            max-width: 850px;
+            margin: 60px auto;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .header-section {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0;
+            color: var(--text-main);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            background-color: #ecfdf5;
+            color: #059669;
+            font-weight: 500;
+        }
+
+        .gallery-area {
+            padding: 32px;
+            min-height: 300px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 20px;
+        }
+
+        .img-item-container {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            cursor: grab;
+        }
+        
+        .img-item-container:active {
+            cursor: grabbing;
+        }
+
+        /* Styling Bulatan Angka */
+        .order-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: var(--primary-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid white;
+            pointer-events: none;
+        }
+
+        .img-wrapper {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f3f4f6;
+        }
+
+        .img-item-container:hover .img-wrapper {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: white;
+            color: #ef4444;
+            border: none;
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 11;
+        }
+
+        .img-item-container:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .add-btn-card {
+            aspect-ratio: 1 / 1;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        .add-btn-card:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: #f5f3ff;
+        }
+
+        /* Sortable Placeholder */
+        .sortable-ghost {
+            opacity: 0.3;
+            background: #e5e7eb;
+        }
+
+        .footer-actions {
+            padding: 20px 32px;
+            background-color: #f9fafb;
+            border-top: 1px solid var(--card-border);
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+
+        .btn-save {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 28px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-save:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1100;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="main-card">
+        <div class="header-section">
+            <h1 class="header-title">PRD-2024 • Tas Ransel Eksklusif</h1>
+            <span class="status-badge">Aktif</span>
+        </div>
+
+        <div class="gallery-area">
+            <div class="image-grid" id="imageGrid">
+                <!-- Dropzone Sentiasa di akhir melalui Javascript -->
+            </div>
+            
+            <div id="emptyMessage" class="empty-state d-none">
+                <i class="bi bi-images" style="font-size: 3rem; opacity: 0.25;"></i>
+                <p class="mt-3">Belum ada gambar. Klik "Tambah" untuk memulai.</p>
+            </div>
+        </div>
+
+        <div class="footer-actions d-flex justify-content-end">
+            <button class="btn btn-save" onclick="saveGallery()">
+                <i class="bi bi-check-circle-fill"></i>Simpan Urutan & Perubahan
+            </button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="fileInput" hidden accept="image/*" multiple onchange="handleUpload(event)">
+
+<div id="toast-container"></div>
+
+<!-- JS Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- SortableJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+<!-- PhotoSwipe JS -->
+<script type="module">
+    import PhotoSwipeLightbox from 'https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe-lightbox.esm.min.js';
+    const lightbox = new PhotoSwipeLightbox({
+        gallery: '#imageGrid',
+        children: '.img-wrapper',
+        pswpModule: () => import('https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.2/photoswipe.esm.min.js')
+    });
+    lightbox.init();
+    window.lightbox = lightbox;
+</script>
+
+<script>
+    let images = [
+        { id: 'init_1', src: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=800', w: 800, h: 1200 },
+        { id: 'init_2', src: 'https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&q=80&w=800', w: 800, h: 1000 },
+        { id: 'init_3', src: 'https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&q=80&w=800', w: 800, h: 1000 }
+    ];
+
+    const grid = document.getElementById('imageGrid');
+    const emptyMsg = document.getElementById('emptyMessage');
+
+    // Inisialisasi SortableJS
+    const sortable = new Sortable(grid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        filter: '.add-btn-card', 
+        onMove: function (evt) {
+            return evt.related.className.indexOf('add-btn-card') === -1;
+        },
+        onEnd: function () {
+            updateImagesOrderFromDOM();
+            render(); 
+        }
+    });
+
+    function updateImagesOrderFromDOM() {
+        const currentItems = Array.from(grid.querySelectorAll('.img-item-container'));
+        const newOrder = currentItems.map(item => {
+            const id = item.dataset.id;
+            return images.find(img => img.id === id);
+        });
+        images = newOrder;
+    }
+
+    function handleUpload(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const id = 'img_' + Math.random().toString(36).substr(2, 9);
+                    images.push({ 
+                        id, 
+                        src: event.target.result,
+                        w: img.width,
+                        h: img.height
+                    });
+                    render();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+        e.target.value = ''; 
+    }
+
+    function removeImg(id, e) {
+        if(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        images = images.filter(item => item.id !== id);
+        render();
+    }
+
+    function render() {
+        grid.innerHTML = '';
+
+        if (images.length === 0) {
+            emptyMsg.classList.remove('d-none');
+        } else {
+            emptyMsg.classList.add('d-none');
+            
+            images.forEach((img, index) => {
+                const container = document.createElement('div');
+                container.className = 'img-item-container';
+                container.dataset.id = img.id;
+                
+                container.innerHTML = `
+                    <div class="order-badge">${index + 1}</div>
+                    <a href="${img.src}" 
+                       class="img-wrapper" 
+                       data-pswp-width="${img.w}" 
+                       data-pswp-height="${img.h}" 
+                       target="_blank">
+                        <img src="${img.src}" alt="Product">
+                    </a>
+                    <button type="button" class="delete-btn" title="Hapus Gambar" onclick="removeImg('${img.id}', event)">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                `;
+                grid.appendChild(container);
+            });
+        }
+
+        const addBtn = document.createElement('div');
+        addBtn.className = 'add-btn-card';
+        addBtn.id = 'dropzone';
+        addBtn.onclick = () => document.getElementById('fileInput').click();
+        addBtn.innerHTML = `
+            <i class="bi bi-plus-lg" style="font-size: 1.5rem; margin-bottom: 4px;"></i>
+            <span style="font-size: 0.85rem; font-weight: 500;">Tambah</span>
+        `;
+        grid.appendChild(addBtn);
+    }
+
+    function saveGallery() {
+        const btn = document.querySelector('.btn-save');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menyimpan...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            showToast('Urutan gambar berhasil disimpan!', 'success');
+        }, 1000);
+    }
+
+    function showToast(msg, type) {
+        const container = document.getElementById('toast-container');
+        const id = 't_' + Date.now();
+        const html = `
+            <div id="${id}" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body d-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle-fill text-success"></i> ${msg}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+        const el = document.getElementById(id);
+        const bsToast = new bootstrap.Toast(el);
+        bsToast.show();
+        el.addEventListener('hidden.bs.toast', () => el.remove());
+    }
+
+    render();
+</script>
+
+</body>
+</html>
