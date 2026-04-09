@@ -1,0 +1,345 @@
+<!-- upload single zip with endpoint testing -->
+<!-- penambahan kondisi waiting selama proses verifikasi diserver. -->
+<!-- perbaikan bug jika file terhapus menggunakan alert javascript  -->
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pengunggahan Dokumen Korporat</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --corp-blue: #003366;
+            --corp-light-bg: #f8f9fa;
+            --corp-border: #dee2e6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+
+        .uploader-card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background: #fff;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid var(--corp-border);
+            padding: 1.5rem;
+        }
+
+        .card-header h5 {
+            color: var(--corp-blue);
+            font-weight: 700;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 1rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--corp-border);
+            border-radius: 6px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: var(--corp-light-bg);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--corp-blue);
+            background-color: #eef4f9;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--corp-blue);
+            margin-bottom: 1rem;
+        }
+
+        .btn-corporate {
+            background-color: var(--corp-blue);
+            color: white;
+            border-radius: 4px;
+            padding: 0.6rem 2rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .btn-corporate:hover {
+            background-color: #002244;
+            color: white;
+        }
+
+        .btn-corporate:disabled {
+            background-color: #cccccc;
+        }
+
+        .progress {
+            height: 12px;
+            border-radius: 6px;
+            display: none;
+            background-color: #e9ecef;
+        }
+
+        .progress-bar {
+            background-color: var(--corp-blue);
+            transition: width 0.3s ease;
+        }
+
+        #file-info {
+            display: none;
+            background: #f1f3f5;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--corp-blue);
+        }
+
+        .status-message {
+            font-size: 0.85rem;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .footer-text {
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        /* Animasi Dot untuk status processing */
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .5em 0 0 rgba(0,0,0,0), 1em 0 0 rgba(0,0,0,0); }
+            40% { color: var(--corp-blue); text-shadow: .5em 0 0 rgba(0,0,0,0), 1em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .5em 0 0 var(--corp-blue), 1em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .5em 0 0 var(--corp-blue), 1em 0 0 var(--corp-blue); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="uploader-card">
+        <div class="card-header">
+            <h5>Dokumen Portal — Unggah Arsip (.ZIP)</h5>
+        </div>
+        <div class="card-body p-4">
+            <div id="alertPlaceholder"></div>
+            
+            <p class="text-muted small mb-4">
+                Maksimal ukuran berkas: 50MB. Berkas besar (seperti 40MB+) mungkin memerlukan waktu tambahan untuk diproses oleh server setelah progres mencapai 100%.
+            </p>
+
+            <input type="file" id="zipInput" accept=".zip" style="display: none;">
+
+            <div class="upload-area" id="dropZone">
+                <div class="upload-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-file-earmark-zip" viewBox="0 0 16 16">
+                      <path d="M5 7h1v1H5V7zm1 1h1v1H6V8zm-1 1h1v1H5V9zm1 1h1v1H6v-1z"/>
+                      <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/>
+                    </svg>
+                </div>
+                <h6 class="mb-1">Pilih berkas .zip untuk diunggah</h6>
+                <p class="text-secondary small">Klik atau tarik berkas ke area ini</p>
+            </div>
+
+            <div id="file-info" class="align-items-center justify-content-between">
+                <div>
+                    <strong>Berkas:</strong> <span id="fileName">-</span><br>
+                    <strong>Ukuran:</strong> <span id="fileSize">-</span>
+                </div>
+                <button type="button" class="btn-close" id="removeFile" aria-label="Close"></button>
+            </div>
+
+            <div class="mt-4">
+                <div class="progress mb-2" id="progressContainer">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="uploadStatus" class="status-message text-center"></div>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button id="uploadBtn" class="btn btn-corporate" disabled>UNGGAH SEKARANG</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer-text">
+        &copy; 2024 Departemen Teknologi Informasi — Infrastruktur Digital Aman.
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const zipInput = document.getElementById('zipInput');
+    const fileInfo = document.getElementById('file-info');
+    const fileNameDisplay = document.getElementById('fileName');
+    const fileSizeDisplay = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFile');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const alertPlaceholder = document.getElementById('alertPlaceholder');
+
+    let selectedFile = null;
+    let currentXhr = null; // Menyimpan referensi XHR aktif
+
+    dropZone.addEventListener('click', () => zipInput.click());
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    zipInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    function handleFiles(files) {
+        if (files.length === 0) return;
+        if (files.length > 1) {
+            showAlert('Hanya diperbolehkan satu berkas.', 'danger');
+            return;
+        }
+        const file = files[0];
+        if (!file.name.toLowerCase().endsWith('.zip')) {
+            showAlert('Format harus .zip.', 'danger');
+            resetUI();
+            return;
+        }
+        selectedFile = file;
+        fileNameDisplay.textContent = file.name;
+        fileSizeDisplay.textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+        fileInfo.style.display = 'flex';
+        dropZone.style.display = 'none';
+        uploadBtn.disabled = false;
+        showStatus('Siap diunggah.', 'text-success');
+    }
+
+    function resetUI() {
+        // Jika ada proses yang sedang berjalan, batalkan (abort)
+        if (currentXhr) {
+            currentXhr.abort();
+            currentXhr = null;
+        }
+        
+        selectedFile = null;
+        zipInput.value = '';
+        fileInfo.style.display = 'none';
+        dropZone.style.display = 'block';
+        uploadBtn.disabled = true;
+        progressContainer.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+        showStatus('', '');
+    }
+
+    removeFileBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        if (currentXhr && currentXhr.readyState !== 4) {
+            if (confirm('Proses pengunggahan sedang berjalan. Batalkan pengunggahan?')) {
+                resetUI();
+                showAlert('Pengunggahan dibatalkan oleh pengguna.', 'warning');
+            }
+        } else {
+            resetUI();
+        }
+    });
+
+    function showStatus(msg, className, isProcessing = false) {
+        uploadStatus.innerHTML = msg + (isProcessing ? '<span class="loading-dots"></span>' : '');
+        uploadStatus.className = 'status-message ' + className;
+    }
+
+    function showAlert(message, type) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+        alertPlaceholder.append(wrapper);
+        setTimeout(() => { if(wrapper.parentNode) wrapper.remove(); }, 5000);
+    }
+
+    uploadBtn.addEventListener('click', () => {
+        if (!selectedFile) return;
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const xhr = new XMLHttpRequest();
+        currentXhr = xhr; // Simpan ke variabel global agar bisa di-abort
+
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percent + '%';
+                
+                if (percent < 100) {
+                    showStatus(`Mengunggah data: ${percent}%`, 'text-primary');
+                } else {
+                    progressBar.classList.remove('progress-bar-animated');
+                    showStatus('Data terkirim 100%. Menunggu verifikasi server', 'text-warning', true);
+                }
+            }
+        });
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                progressBar.classList.remove('progress-bar-striped');
+                progressBar.classList.add('bg-success');
+                showStatus('Verifikasi Berhasil. Berkas tersimpan.', 'text-success');
+                setTimeout(() => {
+                    showAlert('Sukses mengunggah ' + selectedFile.name, 'success');
+                    resetUI();
+                }, 600);
+            } else {
+                handleError('Gagal di server (' + xhr.status + ')');
+            }
+        };
+
+        xhr.onerror = () => {
+            // Cek jika error bukan karena di-abort manual
+            if (xhr.status !== 0) handleError('Kesalahan jaringan.');
+        };
+
+        xhr.onabort = () => {
+            console.log('Upload aborted by user.');
+        };
+
+        function handleError(msg) {
+            progressBar.classList.replace('progress-bar-animated', 'bg-danger');
+            showStatus(msg, 'text-danger');
+            uploadBtn.disabled = false;
+        }
+
+        xhr.open('POST', 'https://httpbin.org/post', true);
+        progressContainer.style.display = 'flex';
+        uploadBtn.disabled = true;
+        xhr.send(formData);
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
