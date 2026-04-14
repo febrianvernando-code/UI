@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Gambar dengan Preview</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --drag-hover-bg: #f8f9fc;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+
+        .drop-zone {
+            width: 100%;
+            height: 200px;
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            color: #6c757d;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background-color: #fafafa;
+        }
+
+        .drop-zone--over {
+            border-color: var(--primary-color);
+            background-color: var(--drag-hover-bg);
+            color: var(--primary-color);
+        }
+
+        .drop-zone__input {
+            display: none;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            background-color: white;
+            z-index: 10;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 20;
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: rgba(220, 53, 69, 1);
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #ced4da;
+        }
+
+        .btn-upload {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: #3e5fbc;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="upload-card">
+        <h4 class="text-center mb-4 fw-bold">Unggah Gambar</h4>
+        
+        <form id="uploadForm">
+            <!-- Input Judul Gambar -->
+            <div class="mb-4">
+                <label for="imageTitle" class="form-label fw-semibold">Judul Gambar</label>
+                <input type="text" class="form-control" id="imageTitle" placeholder="Masukkan judul gambar..." required>
+            </div>
+
+            <!-- Drag and Drop Zone -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold">File Gambar</label>
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone__prompt">
+                        <i class="bi bi-cloud-arrow-up icon-large d-block"></i>
+                        <span>Tarik gambar ke sini atau <strong>klik untuk memilih</strong></span>
+                        <p class="small text-muted mt-2">PNG, JPG atau JPEG (Maks. 5MB)</p>
+                    </div>
+                    
+                    <div class="preview-container" id="previewContainer">
+                        <button type="button" class="remove-btn" id="removeBtn" title="Hapus Gambar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <img src="" alt="Preview" class="preview-image" id="previewImage">
+                    </div>
+
+                    <input type="file" name="myFile" class="drop-zone__input" id="fileInput" accept="image/*">
+                </div>
+            </div>
+
+            <!-- Tombol Submit -->
+            <button type="submit" class="btn btn-primary btn-upload w-100 shadow-sm">
+                <i class="bi bi-check2-circle me-2"></i>Simpan Gambar
+            </button>
+        </form>
+
+        <!-- Message Box (Pengganti Alert) -->
+        <div id="statusMsg" class="mt-3 text-center d-none"></div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const removeBtn = document.getElementById('removeBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // Klik pada drop zone untuk buka file explorer
+        dropZone.addEventListener('click', (e) => {
+            if (e.target !== removeBtn && !removeBtn.contains(e.target)) {
+                fileInput.click();
+            }
+        });
+
+        // Event listener untuk file input
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files[0]);
+        });
+
+        // Drag events
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        dropZone.addEventListener('dragover', () => {
+            dropZone.classList.add('drop-zone--over');
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('drop-zone--over');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            handleFiles(file);
+        });
+
+        // Fungsi memproses file
+        function handleFiles(file) {
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    previewImage.src = reader.result;
+                    previewContainer.style.display = 'block';
+                };
+            } else if (file) {
+                showMessage('Harap pilih file gambar yang valid (JPG/PNG).', 'danger');
+                clearFile();
+            }
+        }
+
+        // Hapus preview
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearFile();
+        });
+
+        function clearFile() {
+            fileInput.value = '';
+            previewImage.src = '';
+            previewContainer.style.display = 'none';
+        }
+
+        // Handle Form Submission
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('imageTitle').value;
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showMessage('Pilih gambar terlebih dahulu!', 'warning');
+                return;
+            }
+
+            // Simulasi upload berhasil
+            showMessage(`Berhasil! Gambar "${title}" siap diunggah.`, 'success');
+            
+            // Reset form setelah 2 detik
+            setTimeout(() => {
+                uploadForm.reset();
+                clearFile();
+                statusMsg.classList.add('d-none');
+            }, 3000);
+        });
+
+        function showMessage(text, type) {
+            statusMsg.textContent = text;
+            statusMsg.className = `mt-3 text-center alert alert-${type}`;
+            statusMsg.classList.remove('d-none');
+        }
+    </script>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
