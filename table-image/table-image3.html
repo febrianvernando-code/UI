@@ -74,6 +74,12 @@
             gap: 5px;
             align-items: center;
         }
+        /* Styling Search Bar */
+        .search-container {
+            position: relative;
+            max-width: 400px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -83,7 +89,12 @@
         <h2 class="mb-2">Manajer Media Gambar</h2>
         <p class="text-muted">Daftar gambar lengkap dengan informasi pengunggah, tanggal, dan aksi unduh.</p>
         
-        <div class="d-flex justify-content-center gap-2 mt-4">
+        <!-- Global Search Input -->
+        <div class="search-container mb-4">
+            <input type="text" id="global-search" class="form-control form-control-lg shadow-sm" placeholder="Cari nama author, pengunggah, atau dimensi...">
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
             <button id="reload-btn" class="btn btn-primary px-4">Muat Ulang</button>
             <button id="download-csv" class="btn btn-outline-secondary px-4">Ekspor CSV</button>
         </div>
@@ -99,6 +110,21 @@
         const end = new Date();
         const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
         return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    // Fungsi Filter Kustom untuk Global Search
+    function customFilter(data, filterParams) {
+        const searchTerm = filterParams.value.toLowerCase();
+        if (!searchTerm) return true;
+
+        // Mencari di berbagai field
+        return (
+            String(data.name).toLowerCase().includes(searchTerm) ||
+            String(data.uploader).toLowerCase().includes(searchTerm) ||
+            String(data.dimensions).toLowerCase().includes(searchTerm) ||
+            String(data.upload_date).toLowerCase().includes(searchTerm) ||
+            String(data.size).toLowerCase().includes(searchTerm)
+        );
     }
 
     // Inisialisasi Tabulator
@@ -193,6 +219,11 @@
                 }
             }
         ],
+    });
+
+    // Event Listener untuk Global Search
+    document.getElementById("global-search").addEventListener("keyup", function(e) {
+        table.setFilter(customFilter, { value: e.target.value });
     });
 
     document.getElementById("reload-btn").addEventListener("click", () => table.setData());
