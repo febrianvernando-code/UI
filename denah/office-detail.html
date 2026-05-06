@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denah Ruang Meeting Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .meeting-table {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .seat {
+            transition: all 0.2s ease;
+        }
+        .seat.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #1e40af;
+            transform: scale(1.1);
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt text-blue-600"></i> Ruang Rapat Utama
+                </h1>
+                <p class="text-slate-500 mt-1">Lantai 3, Sayap Barat</p>
+            </div>
+            <div id="status-badge" class="flex items-center gap-3">
+                <span class="px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 bg-green-100 text-green-700">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    Tersedia
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Denah Visual -->
+            <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-12">
+                <div class="relative w-full aspect-[4/3] bg-slate-100 rounded-xl border-4 border-slate-200 flex items-center justify-center overflow-hidden">
+                    
+                    <!-- Layar -->
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-2 bg-slate-400 rounded-b-md flex items-center justify-center">
+                        <span class="text-[8px] text-white font-bold uppercase tracking-tighter">LAYAR PROYEKTOR</span>
+                    </div>
+
+                    <!-- Pintu -->
+                    <div class="absolute bottom-0 right-10 w-20 h-2 bg-amber-600 rounded-t-md">
+                        <span class="absolute -top-6 right-0 text-[10px] font-bold text-amber-700">PINTU</span>
+                    </div>
+
+                    <!-- Meja Utama -->
+                    <div class="meeting-table relative w-3/5 h-2/5 bg-white border-4 border-slate-300 rounded-[60px] flex items-center justify-center">
+                        <div class="text-slate-300 font-bold tracking-[0.2em] text-xs uppercase">Meja Rapat</div>
+                        
+                        <!-- Kursi Atas (1-4) -->
+                        <div class="absolute -top-12 left-0 w-full flex justify-around px-8" id="row-top"></div>
+                        <!-- Kursi Bawah (5-8) -->
+                        <div class="absolute -bottom-12 left-0 w-full flex justify-around px-8" id="row-bottom"></div>
+                        <!-- Kursi Kiri (9-10) -->
+                        <div class="absolute top-0 -left-12 h-full flex flex-col justify-around py-4" id="row-left"></div>
+                        <!-- Kursi Kanan (11-12) -->
+                        <div class="absolute top-0 -right-12 h-full flex flex-col justify-around py-4" id="row-right"></div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="mt-6 flex items-center justify-center gap-6 text-sm text-slate-500 italic">
+                    <div class="flex items-center gap-2"><div class="w-3 h-3 bg-white border border-slate-300 rounded"></div> Tersedia</div>
+                    <div class="flex items-center gap-2"><div class="w-3 h-3 bg-blue-600 rounded"></div> Dipilih</div>
+                </div>
+            </div>
+
+            <!-- Panel Info -->
+            <div class="flex flex-col gap-6">
+                <!-- Fasilitas -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-info-circle text-blue-600"></i> Fasilitas
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-slate-600">
+                            <i class="fas fa-tv text-blue-500 w-4"></i> Proyektor
+                        </div>
+                        <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-slate-600">
+                            <i class="fas fa-wifi text-blue-500 w-4"></i> WiFi
+                        </div>
+                        <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-slate-600">
+                            <i class="fas fa-coffee text-blue-500 w-4"></i> Snack
+                        </div>
+                        <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-lg text-slate-600">
+                            <i class="fas fa-wind text-blue-500 w-4"></i> AC
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Reservasi -->
+                <div class="bg-slate-900 rounded-3xl shadow-xl p-6 text-white">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i class="far fa-calendar-check text-blue-400"></i> Reservasi
+                    </h3>
+                    <div class="space-y-4">
+                        <div id="seat-info" class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-xs text-blue-200">
+                            Silakan klik nomor kursi pada denah untuk memilih posisi.
+                        </div>
+                        <button id="btn-book" class="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg active:scale-95">
+                            Pesan Ruangan Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data & State
+        let selectedSeat = null;
+        let isBooked = false;
+
+        // Render Kursi
+        function createSeat(id) {
+            const btn = document.createElement('button');
+            btn.className = 'seat w-10 h-10 rounded-lg border-2 bg-white border-slate-300 text-slate-400 text-xs font-bold flex items-center justify-center';
+            btn.innerText = id;
+            btn.onclick = () => selectSeat(id, btn);
+            return btn;
+        }
+
+        function initSeats() {
+            const rows = {
+                'row-top': [1, 2, 3, 4],
+                'row-bottom': [5, 6, 7, 8],
+                'row-left': [9, 10],
+                'row-right': [11, 12]
+            };
+
+            for (const [id, nums] of Object.entries(rows)) {
+                const container = document.getElementById(id);
+                nums.forEach(n => container.appendChild(createSeat(n)));
+            }
+        }
+
+        function selectSeat(id, element) {
+            // Reset kursi sebelumnya
+            document.querySelectorAll('.seat').forEach(s => s.classList.remove('active'));
+            
+            // Set kursi baru
+            selectedSeat = id;
+            element.classList.add('active');
+            
+            // Update teks info
+            document.getElementById('seat-info').innerText = `Anda memilih posisi Kursi ${id}. Fokus pandangan ke arah layar proyektor.`;
+        }
+
+        // Handle Booking
+        const btnBook = document.getElementById('btn-book');
+        const statusBadge = document.getElementById('status-badge');
+
+        btnBook.onclick = () => {
+            isBooked = !isBooked;
+            
+            if (isBooked) {
+                btnBook.innerText = 'Batalkan Pesanan';
+                btnBook.classList.replace('bg-blue-600', 'bg-red-600');
+                btnBook.classList.replace('hover:bg-blue-50', 'hover:bg-red-500');
+                statusBadge.innerHTML = `
+                    <span class="px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 bg-red-100 text-red-700">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        Sedang Digunakan
+                    </span>
+                `;
+            } else {
+                btnBook.innerText = 'Pesan Ruangan Sekarang';
+                btnBook.classList.replace('bg-red-600', 'bg-blue-600');
+                btnBook.classList.replace('hover:bg-red-500', 'hover:bg-blue-500');
+                statusBadge.innerHTML = `
+                    <span class="px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 bg-green-100 text-green-700">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        Tersedia
+                    </span>
+                `;
+            }
+        };
+
+        // Jalankan saat load
+        window.onload = initSeats;
+    </script>
+</body>
+</html>
