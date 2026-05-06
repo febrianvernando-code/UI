@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Visualisasi Denah Kantor Modern</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --wall: #1a1a1a;
+            --room-work: #f1f5f9;
+            --room-meeting: #e0f2fe;
+            --room-toilet: #fef2f2;
+            --room-private: #f8fafc;
+            --accent: #3b82f6;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Container Denah Utama */
+        .floor-plan-container {
+            display: grid;
+            grid-template-columns: 200px 1fr 200px; /* Sisi Kiri, Tengah, Sisi Kanan */
+            grid-template-rows: auto;
+            gap: 15px;
+            background: white;
+            padding: 25px;
+            border: 8px solid var(--wall);
+            border-radius: 4px;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Styling Umum Ruangan */
+        .room {
+            border: 2px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            min-height: 100px;
+        }
+
+        .room:hover {
+            border-color: var(--accent);
+            background-color: #f0f7ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        /* Penempatan Kolom */
+        .column-left, .column-right {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .column-center {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Section Atas di Kolom Tengah (Toilet) */
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Open Workspace di Tengah */
+        .open-workspace {
+            flex-grow: 1;
+            border: 2px dashed #94a3b8;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .desk {
+            border: 1px solid #e2e8f0;
+            background: white;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+
+        .entrance {
+            border-bottom: 5px solid var(--accent);
+            width: 80px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--accent);
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Floor Plan Manager</h1>
+            <p class="text-slate-500 mt-2 text-lg">Visualisasi denah sesuai layout arsitektur terbaru</p>
+        </header>
+
+        <div class="floor-plan-container shadow-xl">
+            
+            <!-- KOLOM KIRI -->
+            <div class="column-left">
+                <div class="room bg-slate-50" style="height: 180px;" onclick="showDetail('Ruang Manajer', 'Meja kerja besar, kursi tamu, rak buku, dan tanaman hias.', '💼')">
+                    <span class="text-2xl mb-1">💼</span>
+                    <span>Ruang Manajer</span>
+                </div>
+                <div class="room bg-slate-100" style="height: 120px;" onclick="showDetail('Area Printer & Lounge', 'Fasilitas fotokopi, printer industrial, dan dispenser air.', '🖨️')">
+                    <span class="text-2xl mb-1">🖨️</span>
+                    <span>Printer & Lounge</span>
+                </div>
+                <div class="room bg-slate-50" style="height: 100px;" onclick="showDetail('Ruang Kerja Pribadi 1', 'Ruang fokus individu dengan meja L-shape.', '👤')">
+                    <span>Private Room 1</span>
+                </div>
+                <div class="room bg-slate-50" style="height: 100px;" onclick="showDetail('Ruang Kerja Pribadi 2', 'Ruang fokus individu dengan kedap suara.', '👤')">
+                    <span>Private Room 2</span>
+                </div>
+            </div>
+
+            <!-- KOLOM TENGAH -->
+            <div class="column-center">
+                <!-- Baris Toilet Atas -->
+                <div class="top-row">
+                    <div class="room bg-red-50" onclick="showDetail('Toilet A', 'Fasilitas wastafel dan toilet duduk bersih.', '🚻')">
+                        <span class="text-xl">🚹</span>
+                        <span>Toilet 1</span>
+                    </div>
+                    <div class="room bg-red-50" onclick="showDetail('Toilet B', 'Fasilitas wastafel dan cermin besar.', '🚻')">
+                        <span class="text-xl">🚺</span>
+                        <span>Toilet 2</span>
+                    </div>
+                </div>
+
+                <!-- Area Kerja Utama -->
+                <div class="open-workspace">
+                    <div class="desk">Meja 1</div><div class="desk">Meja 2</div>
+                    <div class="desk">Meja 3</div><div class="desk">Meja 4</div>
+                    <div class="desk">Meja 5</div><div class="desk">Meja 6</div>
+                    <div class="desk">Meja 7</div><div class="desk">Meja 8</div>
+                </div>
+
+                <!-- Pintu Masuk -->
+                <div class="entrance font-bold uppercase tracking-widest">Entrance</div>
+            </div>
+
+            <!-- KOLOM KANAN -->
+            <div class="column-right">
+                <div class="room bg-blue-50" style="height: 220px;" onclick="showDetail('Ruang Rapat Utama', 'Meja oval kapasitas 10-12 orang, Smart TV 75 inch, Video Conference.', '📽️')">
+                    <span class="text-3xl mb-2">🤝</span>
+                    <span>R. Rapat Besar</span>
+                </div>
+                <div class="room bg-blue-50" style="height: 150px;" onclick="showDetail('Ruang Rapat 2', 'Kapasitas 4 orang, Whiteboard digital.', '👥')">
+                    <span class="text-xl mb-1">👥</span>
+                    <span>R. Rapat 2</span>
+                </div>
+                <div class="room bg-blue-50" style="height: 150px;" onclick="showDetail('Ruang Rapat 3', 'Kapasitas 4 orang, Kedap suara tinggi.', '👥')">
+                    <span class="text-xl mb-1">👥</span>
+                    <span>R. Rapat 3</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Legenda -->
+        <div class="mt-8 flex justify-center gap-6 text-sm font-medium text-slate-600">
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-blue-200 rounded"></span> Ruang Rapat</div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-slate-200 rounded"></span> Kantor/Pribadi</div>
+            <div class="flex items-center gap-2"><span class="w-3 h-3 bg-red-200 rounded"></span> Fasilitas Umun</div>
+        </div>
+    </div>
+
+    <!-- Modal Detail -->
+    <div id="roomModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="modalIcon" class="text-6xl mb-4 text-center"></div>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-3 text-slate-800 border-b pb-2"></h2>
+            <p id="modalDesc" class="text-slate-600 leading-relaxed mb-6"></p>
+            <button onclick="closeModal()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">
+                Selesai
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function showDetail(title, desc, icon) {
+            const modal = document.getElementById('roomModal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            document.getElementById('modalIcon').innerText = icon;
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('roomModal')) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
