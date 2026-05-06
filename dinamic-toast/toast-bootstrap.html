@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dynamic Bootstrap Toast</title>
+    
+    <!-- Link CSS Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f8f9fa;
+        }
+        .controls {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <h4 class="mb-4">Pemicu Toast Dinamis</h4>
+        <div class="d-grid gap-2 d-md-block">
+            <button class="btn btn-success" onclick="createToast('Berhasil!', 'Data telah disimpan ke database.', 'success')">
+                Success Toast
+            </button>
+            <button class="btn btn-danger" onclick="createToast('Error!', 'Terjadi kesalahan sistem.', 'danger')">
+                Error Toast
+            </button>
+            <button class="btn btn-warning" onclick="createToast('Peringatan', 'Koneksi internet tidak stabil.', 'warning')">
+                Warning Toast
+            </button>
+        </div>
+    </div>
+
+    <!-- Script Bootstrap 5 JS Bundle (Wajib) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /**
+         * Logika Utama: Membuat Toast tanpa elemen HTML awal
+         */
+        function createToast(title, message, type = 'info') {
+            // 1. Pastikan Container sudah ada di DOM
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(container);
+            }
+
+            // 2. Buat ID unik untuk elemen toast
+            const toastId = 'toast-' + Math.floor(Math.random() * 1000);
+
+            // 3. Template HTML Toast (Gaya Bootstrap 5)
+            const toastHTML = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-${type} text-white">
+                        <strong class="me-auto">${title}</strong>
+                        <small>Baru saja</small>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            // 4. Masukkan ke dalam container
+            container.insertAdjacentHTML('beforeend', toastHTML);
+
+            // 5. Inisialisasi & Tampilkan menggunakan Instance Bootstrap
+            const toastElement = document.getElementById(toastId);
+            const toastInstance = new bootstrap.Toast(toastElement, {
+                delay: 4000 // Durasi tampil dalam milidetik
+            });
+            
+            toastInstance.show();
+
+            // 6. Housekeeping: Hapus elemen dari DOM setelah selesai animasi sembunyi
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+    </script>
+</body>
+</html>
