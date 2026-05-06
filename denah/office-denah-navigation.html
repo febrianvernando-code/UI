@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Navigasi Denah Kantor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --wall: #1a1a1a;
+            --accent: #3b82f6;
+            --highlight: #facc15;
+            --path-color: #22c55e;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .floor-plan-wrapper {
+            position: relative;
+            background: white;
+            padding: 20px;
+            border: 6px solid var(--wall);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .floor-plan-container {
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            gap: 15px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* SVG Overlay untuk Garis Petunjuk */
+        #navigation-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .nav-path {
+            fill: none;
+            stroke: var(--path-color);
+            stroke-width: 5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 10, 10;
+            animation: dash 1s linear infinite;
+            filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.5));
+        }
+
+        @keyframes dash {
+            to { stroke-dashoffset: -20; }
+        }
+
+        .room {
+            border: 2px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: white;
+        }
+
+        .highlight-room {
+            animation: pulse-highlight 1.5s infinite;
+            border-color: var(--highlight) !important;
+            z-index: 60;
+        }
+
+        @keyframes pulse-highlight {
+            0% { transform: scale(1); box-shadow: 0 0 0px var(--highlight); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px var(--highlight); }
+            100% { transform: scale(1); box-shadow: 0 0 0px var(--highlight); }
+        }
+
+        .column-left, .column-right, .column-center {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .open-workspace {
+            flex-grow: 1;
+            border: 2px dashed #94a3b8;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            padding: 15px;
+            background: #fcfcfc;
+        }
+
+        .desk {
+            border: 1px solid #e2e8f0;
+            background: white;
+            height: 35px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: #94a3b8;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-item.active {
+            background-color: #eff6ff;
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6" onresize="drawPath()">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Navigasi Interaktif Lantai 4</h1>
+                <p class="text-slate-500">Pilih tujuan Anda untuk melihat rute petunjuk arah.</p>
+            </div>
+            <div id="entrance-point" class="mt-4 md:mt-0 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 border border-green-200">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                Titik Anda: Pintu Utama
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- LIST RUANGAN -->
+            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit">
+                <h2 class="font-bold text-slate-800 mb-4 text-lg">Ke Mana Anda Ingin Pergi?</h2>
+                <div class="space-y-1" id="sidebar-list">
+                    <button onclick="navigateTo('manajer')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">💼 Ruang Manajer</button>
+                    <button onclick="navigateTo('lounge')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">🖨️ Area Printer & Lounge</button>
+                    <button onclick="navigateTo('private1')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">👤 Ruang Kerja Pribadi 1</button>
+                    <button onclick="navigateTo('private2')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">👤 Ruang Kerja Pribadi 2</button>
+                    <button onclick="navigateTo('toilet1')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">🚻 Toilet 1 (Pria)</button>
+                    <button onclick="navigateTo('toilet2')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">🚻 Toilet 2 (Wanita)</button>
+                    <button onclick="navigateTo('rapat-besar')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">📽️ Ruang Rapat Utama</button>
+                    <button onclick="navigateTo('rapat-kecil1')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">👥 Ruang Rapat 2</button>
+                    <button onclick="navigateTo('rapat-kecil2')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600">👥 Ruang Rapat 3</button>
+                </div>
+                <button onclick="resetNav()" class="mt-6 w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition underline">Reset Navigasi</button>
+            </div>
+
+            <!-- AREA DENAH DENGAN SVG -->
+            <div class="lg:col-span-3">
+                <div class="floor-plan-wrapper shadow-2xl" id="plan-wrapper">
+                    <!-- SVG Overlay -->
+                    <svg id="navigation-svg">
+                        <path id="guide-path" class="nav-path" d="" />
+                    </svg>
+
+                    <div class="floor-plan-container">
+                        <!-- KOLOM KIRI -->
+                        <div class="column-left">
+                            <div id="room-manajer" class="room bg-slate-50" style="height: 160px;">Ruang Manajer</div>
+                            <div id="room-lounge" class="room bg-slate-100" style="height: 100px;">Lounge & Print</div>
+                            <div id="room-private1" class="room bg-slate-50" style="height: 90px;">Private 1</div>
+                            <div id="room-private2" class="room bg-slate-50" style="height: 90px;">Private 2</div>
+                        </div>
+
+                        <!-- KOLOM TENGAH -->
+                        <div class="column-center">
+                            <div class="top-row">
+                                <div id="room-toilet1" class="room bg-red-50">Toilet 1</div>
+                                <div id="room-toilet2" class="room bg-red-50">Toilet 2</div>
+                            </div>
+                            <div class="open-workspace" id="workspace-center">
+                                <div class="desk"></div><div class="desk"></div>
+                                <div class="desk"></div><div class="desk"></div>
+                                <div class="desk"></div><div class="desk"></div>
+                                <div class="desk"></div><div class="desk"></div>
+                            </div>
+                            <div id="entrance" class="border-b-8 border-green-500 w-32 mx-auto text-center pt-2 font-black text-green-600 text-xs tracking-widest">PINTU MASUK</div>
+                        </div>
+
+                        <!-- KOLOM KANAN -->
+                        <div class="column-right">
+                            <div id="room-rapat-besar" class="room bg-blue-50" style="height: 200px;">R. Rapat Besar</div>
+                            <div id="room-rapat-kecil1" class="room bg-blue-50" style="height: 130px;">R. Rapat 2</div>
+                            <div id="room-rapat-kecil2" class="room bg-blue-50" style="height: 130px;">R. Rapat 3</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="nav-instruction" class="mt-4 p-4 bg-white border rounded-xl hidden flex items-center gap-3">
+                    <div class="bg-green-500 text-white p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-700">Ikuti garis putus-putus hijau menuju lokasi tujuan Anda.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTargetId = null;
+
+        function navigateTo(roomId) {
+            currentTargetId = roomId;
+            
+            // UI Sidebar Update
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                if(item.innerText.toLowerCase().includes(roomId)) item.classList.add('active');
+            });
+
+            // Highlight Room
+            document.querySelectorAll('.room').forEach(r => r.classList.remove('highlight-room'));
+            const targetRoom = document.getElementById('room-' + roomId);
+            targetRoom.classList.add('highlight-room');
+
+            // Show Instruction
+            document.getElementById('nav-instruction').classList.remove('hidden');
+
+            // Draw SVG Path
+            drawPath();
+        }
+
+        function drawPath() {
+            if (!currentTargetId) return;
+
+            const wrapper = document.getElementById('plan-wrapper').getBoundingClientRect();
+            const startEl = document.getElementById('entrance').getBoundingClientRect();
+            const endEl = document.getElementById('room-' + currentTargetId).getBoundingClientRect();
+            const svgPath = document.getElementById('guide-path');
+
+            // Hitung koordinat relatif terhadap wrapper denah
+            const startX = (startEl.left + startEl.width / 2) - wrapper.left;
+            const startY = (startEl.top) - wrapper.top;
+            
+            const endX = (endEl.left + endEl.width / 2) - wrapper.left;
+            const endY = (endEl.top + endEl.height / 2) - wrapper.top;
+
+            // Logika rute (L-Shape Path agar terlihat lebih natural seperti berjalan di koridor)
+            // 1. Naik dari pintu masuk ke tengah koridor
+            // 2. Berbelok horizontal ke arah kolom ruangan
+            // 3. Menuju ruangan target
+            
+            const midY = startY - 40; // Titik belok di koridor utama
+
+            const pathData = `M ${startX} ${startY} 
+                             L ${startX} ${midY} 
+                             L ${endX} ${midY} 
+                             L ${endX} ${endY}`;
+
+            svgPath.setAttribute('d', pathData);
+        }
+
+        function resetNav() {
+            currentTargetId = null;
+            document.getElementById('guide-path').setAttribute('d', '');
+            document.querySelectorAll('.room').forEach(r => r.classList.remove('highlight-room'));
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('nav-instruction').classList.add('hidden');
+        }
+
+        // Pastikan garis digambar ulang jika ukuran jendela berubah (responsif)
+        window.addEventListener('resize', drawPath);
+    </script>
+</body>
+</html>
