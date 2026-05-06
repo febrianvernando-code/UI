@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Navigasi Denah Kantor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --wall: #1a1a1a;
+            --accent: #3b82f6;
+            --highlight: #facc15;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .floor-plan-container {
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border: 6px solid var(--wall);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .room {
+            border: 2px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            position: relative;
+        }
+
+        /* Animasi Highlight Petunjuk */
+        .highlight-room {
+            animation: pulse-highlight 1.5s infinite;
+            border-color: var(--highlight) !important;
+            z-index: 20;
+            box-shadow: 0 0 20px var(--highlight);
+        }
+
+        @keyframes pulse-highlight {
+            0% { background-color: white; transform: scale(1); }
+            50% { background-color: var(--highlight); transform: scale(1.05); }
+            100% { background-color: white; transform: scale(1); }
+        }
+
+        .column-left, .column-right, .column-center {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .open-workspace {
+            flex-grow: 1;
+            border: 2px dashed #94a3b8;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            padding: 15px;
+            background: #fcfcfc;
+        }
+
+        .desk {
+            border: 1px solid #e2e8f0;
+            background: white;
+            height: 35px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: #94a3b8;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background-color: #eff6ff;
+            border-left-color: var(--accent);
+            padding-left: 1.25rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-6">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Navigasi Denah Lantai</h1>
+                <p class="text-slate-500">Pilih ruangan di daftar untuk melihat lokasi pada denah.</p>
+            </div>
+            <div class="hidden md:block text-xs font-mono bg-slate-200 px-3 py-1 rounded">ID: OFFICE-FL4-V2</div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- SIDEBAR: LIST RUANGAN -->
+            <div class="lg:col-span-1 bg-white p-5 rounded-xl shadow-sm border border-slate-200 h-fit">
+                <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    Daftar Ruangan
+                </h2>
+                <div class="space-y-1">
+                    <button onclick="locateRoom('manajer')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">💼 Ruang Manajer</button>
+                    <button onclick="locateRoom('lounge')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">🖨️ Printer & Lounge</button>
+                    <button onclick="locateRoom('private1')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">👤 Private Room 1</button>
+                    <button onclick="locateRoom('private2')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">👤 Private Room 2</button>
+                    <button onclick="locateRoom('toilet1')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">🚻 Toilet 1 (Pria)</button>
+                    <button onclick="locateRoom('toilet2')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">🚻 Toilet 2 (Wanita)</button>
+                    <button onclick="locateRoom('rapat-besar')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">📽️ R. Rapat Besar</button>
+                    <button onclick="locateRoom('rapat-kecil1')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">👥 Ruang Rapat 2</button>
+                    <button onclick="locateRoom('rapat-kecil2')" class="sidebar-item w-full text-left p-3 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600">👥 Ruang Rapat 3</button>
+                </div>
+            </div>
+
+            <!-- AREA DENAH -->
+            <div class="lg:col-span-3">
+                <div class="floor-plan-container shadow-2xl">
+                    
+                    <!-- KOLOM KIRI -->
+                    <div class="column-left">
+                        <div id="room-manajer" class="room bg-slate-50" style="height: 160px;" onclick="showDetail('Ruang Manajer', 'Meja kerja besar, kursi tamu, rak buku.', '💼')">
+                            <span>Ruang Manajer</span>
+                        </div>
+                        <div id="room-lounge" class="room bg-slate-100" style="height: 100px;" onclick="showDetail('Area Printer & Lounge', 'Printer industrial dan dispenser air.', '🖨️')">
+                            <span>Printer & Lounge</span>
+                        </div>
+                        <div id="room-private1" class="room bg-slate-50" style="height: 90px;" onclick="showDetail('Ruang Kerja Pribadi 1', 'Fasilitas kerja individu.', '👤')">
+                            <span>Private 1</span>
+                        </div>
+                        <div id="room-private2" class="room bg-slate-50" style="height: 90px;" onclick="showDetail('Ruang Kerja Pribadi 2', 'Fasilitas kerja individu.', '👤')">
+                            <span>Private 2</span>
+                        </div>
+                    </div>
+
+                    <!-- KOLOM TENGAH -->
+                    <div class="column-center">
+                        <div class="top-row">
+                            <div id="room-toilet1" class="room bg-red-50" onclick="showDetail('Toilet 1', 'Fasilitas toilet pria.', '🚻')">
+                                <span>Toilet 1</span>
+                            </div>
+                            <div id="room-toilet2" class="room bg-red-50" onclick="showDetail('Toilet 2', 'Fasilitas toilet wanita.', '🚻')">
+                                <span>Toilet 2</span>
+                            </div>
+                        </div>
+
+                        <div class="open-workspace">
+                            <div class="desk">Meja 1</div><div class="desk">Meja 2</div>
+                            <div class="desk">Meja 3</div><div class="desk">Meja 4</div>
+                            <div class="desk">Meja 5</div><div class="desk">Meja 6</div>
+                            <div class="desk">Meja 7</div><div class="desk">Meja 8</div>
+                        </div>
+
+                        <div class="border-b-4 border-blue-500 w-20 mx-auto text-[10px] text-center pt-1 font-bold text-blue-500">ENTRANCE</div>
+                    </div>
+
+                    <!-- KOLOM KANAN -->
+                    <div class="column-right">
+                        <div id="room-rapat-besar" class="room bg-blue-50" style="height: 200px;" onclick="showDetail('Ruang Rapat Utama', 'Kapasitas 12 orang.', '📽️')">
+                            <span>R. Rapat Besar</span>
+                        </div>
+                        <div id="room-rapat-kecil1" class="room bg-blue-50" style="height: 130px;" onclick="showDetail('Ruang Rapat 2', 'Kapasitas 4 orang.', '👥')">
+                            <span>R. Rapat 2</span>
+                        </div>
+                        <div id="room-rapat-kecil2" class="room bg-blue-50" style="height: 130px;" onclick="showDetail('Ruang Rapat 3', 'Kapasitas 4 orang.', '👥')">
+                            <span>R. Rapat 3</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Notifikasi Info -->
+                <div id="infoToast" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm text-center opacity-0 transition-opacity duration-300">
+                    Menampilkan lokasi ruangan...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail -->
+    <div id="roomModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="modalIcon" class="text-6xl mb-4 text-center"></div>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-3 text-slate-800 border-b pb-2"></h2>
+            <p id="modalDesc" class="text-slate-600 mb-6"></p>
+            <button onclick="closeModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let highlightTimeout;
+
+        function locateRoom(roomId) {
+            // Hapus highlight sebelumnya jika ada
+            const allRooms = document.querySelectorAll('.room');
+            allRooms.forEach(r => r.classList.remove('highlight-room'));
+            
+            clearTimeout(highlightTimeout);
+
+            // Beri highlight pada ruangan yang dipilih
+            const target = document.getElementById('room-' + roomId);
+            if (target) {
+                target.classList.add('highlight-room');
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Tampilkan toast info
+                const toast = document.getElementById('infoToast');
+                toast.style.opacity = '1';
+
+                // Hilangkan highlight setelah 4 detik
+                highlightTimeout = setTimeout(() => {
+                    target.classList.remove('highlight-room');
+                    toast.style.opacity = '0';
+                }, 4500);
+            }
+        }
+
+        function showDetail(title, desc, icon) {
+            const modal = document.getElementById('roomModal');
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDesc').innerText = desc;
+            document.getElementById('modalIcon').innerText = icon;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('roomModal')) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
