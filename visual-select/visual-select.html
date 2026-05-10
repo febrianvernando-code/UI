@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cascading Multi-Select - Virtual Select</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Virtual Select CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.39/dist/virtual-select.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .vscomp-wrapper {
+            width: 100%;
+            border-radius: 0.375rem;
+        }
+        .vscomp-toggle-button {
+            padding: 8px 12px;
+            border-color: #dee2e6;
+        }
+        .label-field {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+            display: block;
+        }
+        .result-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 50px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-4">
+                <div class="text-center mb-4">
+                    <h3><i class="bi bi-layers-half text-primary"></i> Filter Cascading</h3>
+                    <p class="text-muted">Pilih Provinsi untuk memperbarui daftar Kota secara dinamis</p>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Dropdown Pertama: Provinsi -->
+                    <div class="col-md-6">
+                        <label class="label-field">Pilih Provinsi (Multiple)</label>
+                        <div id="provinsi-select"></div>
+                    </div>
+
+                    <!-- Dropdown Kedua: Kota (Cascading) -->
+                    <div class="col-md-6">
+                        <label class="label-field">Pilih Kota (Multiple)</label>
+                        <div id="kota-select"></div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Menampilkan Hasil Pilihan -->
+                <div class="result-container">
+                    <label class="label-field">Data Terpilih:</label>
+                    <div class="result-box" id="output-data">
+                        <span class="text-muted">Belum ada data yang dipilih.</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-outline-secondary" onclick="resetFilter()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </button>
+                    <button class="btn btn-primary" onclick="tampilkanHasil()">
+                        <i class="bi bi-check-circle"></i> Simpan Pilihan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Virtual Select JS -->
+<script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.39/dist/virtual-select.min.js"></script>
+
+<script>
+    // 1. Data Mock
+    const dataProvinsi = [
+        { label: 'Jawa Barat', value: 'jabar' },
+        { label: 'Jawa Tengah', value: 'jateng' },
+        { label: 'Jawa Timur', value: 'jatim' }
+    ];
+
+    const dataKotaMapping = {
+        'jabar': [
+            { label: 'Bandung', value: 'bdg' },
+            { label: 'Bekasi', value: 'bks' },
+            { label: 'Bogor', value: 'bgr' },
+            { label: 'Cimahi', value: 'cmh' }
+        ],
+        'jateng': [
+            { label: 'Semarang', value: 'smg' },
+            { label: 'Solo', value: 'slo' },
+            { label: 'Magelang', value: 'mgl' },
+            { label: 'Tegal', value: 'tgl' }
+        ],
+        'jatim': [
+            { label: 'Surabaya', value: 'sby' },
+            { label: 'Malang', value: 'mlg' },
+            { label: 'Sidoarjo', value: 'sda' },
+            { label: 'Banyuwangi', value: 'bwn' }
+        ]
+    };
+
+    // Global references
+    let provSelect, kotaSelect;
+
+    // 2. Inisialisasi Virtual Select
+    window.addEventListener('DOMContentLoaded', function() {
+        
+        // Inisialisasi dropdown Provinsi
+        VirtualSelect.init({
+            ele: '#provinsi-select',
+            options: dataProvinsi,
+            multiple: true,
+            placeholder: 'Pilih Provinsi...',
+            search: true
+        });
+
+        // Inisialisasi dropdown Kota
+        VirtualSelect.init({
+            ele: '#kota-select',
+            options: [],
+            multiple: true,
+            placeholder: 'Pilih Kota...',
+            noOptionsText: 'Pilih provinsi terlebih dahulu',
+            search: true
+        });
+
+        provSelect = document.querySelector('#provinsi-select');
+        kotaSelect = document.querySelector('#kota-select');
+
+        // 3. Event Listener Utama
+        provSelect.addEventListener('change', function() {
+            // Ambil nilai terpilih. Jika multiple, ini akan mengembalikan array value.
+            const selectedValues = provSelect.value;
+            let newOptions = [];
+
+            if (selectedValues && selectedValues.length > 0) {
+                // Jika hanya satu string (bukan array), masukkan ke array
+                const items = Array.isArray(selectedValues) ? selectedValues : [selectedValues];
+                
+                items.forEach(val => {
+                    if (dataKotaMapping[val]) {
+                        newOptions = [...newOptions, ...dataKotaMapping[val]];
+                    }
+                });
+            }
+
+            // Gunakan setOptions atau setData (setData adalah alias untuk setOptions)
+            // Kami pastikan instance sudah siap
+            if (kotaSelect && typeof kotaSelect.setOptions === 'function') {
+                kotaSelect.setOptions(newOptions);
+            }
+        });
+    });
+
+    function tampilkanHasil() {
+        const provVal = provSelect.value;
+        const kotaVal = kotaSelect.value;
+        const output = document.getElementById('output-data');
+
+        if (!kotaVal || (Array.isArray(kotaVal) && kotaVal.length === 0)) {
+            output.innerHTML = `<span class="text-danger">Silakan pilih minimal satu kota.</span>`;
+            return;
+        }
+
+        const displayProv = Array.isArray(provVal) ? provVal.join(', ') : provVal;
+        const displayKota = Array.isArray(kotaVal) ? kotaVal.join(', ') : kotaVal;
+
+        output.innerHTML = `
+            <strong>Provinsi IDs:</strong> ${displayProv} <br>
+            <strong>Kota IDs:</strong> ${displayKota}
+        `;
+    }
+
+    function resetFilter() {
+        if (provSelect) provSelect.reset();
+        if (kotaSelect) {
+            kotaSelect.setOptions([]);
+            kotaSelect.reset();
+        }
+        document.getElementById('output-data').innerHTML = '<span class="text-muted">Belum ada data yang dipilih.</span>';
+    }
+</script>
+
+</body>
+</html>
