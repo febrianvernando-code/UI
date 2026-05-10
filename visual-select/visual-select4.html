@@ -1,0 +1,260 @@
+<!-- group select with api real -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cascading Multi-Select - Real API Indonesia</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Virtual Select CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.39/dist/virtual-select.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        .vscomp-wrapper {
+            width: 100%;
+            border-radius: 0.375rem;
+        }
+        .vscomp-toggle-button {
+            padding: 8px 12px;
+            border-color: #dee2e6;
+        }
+        .label-field {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+            display: block;
+        }
+        .result-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 50px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-4">
+                <div class="text-center mb-4">
+                    <h3><i class="bi bi-geo-alt-fill text-danger"></i> Wilayah Indonesia (Real API)</h3>
+                    <p class="text-muted">Data diambil langsung dari API Open Source Wilayah Indonesia</p>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Dropdown Pertama: Provinsi -->
+                    <div class="col-md-6">
+                        <label class="label-field">Pilih Provinsi (Multiple)</label>
+                        <div id="provinsi-select"></div>
+                    </div>
+
+                    <!-- Dropdown Kedua: Kota (Cascading via Real API) -->
+                    <div class="col-md-6">
+                        <label class="label-field">Pilih Kabupaten/Kota (Multiple)</label>
+                        <div id="kota-select"></div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="result-container">
+                    <label class="label-field">Data Terpilih:</label>
+                    <div class="result-box" id="output-data">
+                        <span class="text-muted">Belum ada data yang dipilih.</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-end">
+                    <button class="btn btn-outline-secondary" onclick="resetFilter()">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </button>
+                    <button class="btn btn-primary" onclick="tampilkanHasil()">
+                        <i class="bi bi-check-circle"></i> Lihat Hasil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Virtual Select JS -->
+<script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.39/dist/virtual-select.min.js"></script>
+
+<script>
+    const API_BASE_URL = 'https://www.emsifa.com/api-wilayah-indonesia/api';
+    let provSelect, kotaSelect;
+
+    window.addEventListener('DOMContentLoaded', async function() {
+        // 1. Inisialisasi awal UI
+        VirtualSelect.init({
+            ele: '#provinsi-select',
+            options: [],
+            multiple: true,
+            placeholder: 'Pilih Provinsi...',
+            search: true,
+            loadingText: 'Mengambil data...'
+        });
+
+        VirtualSelect.init({
+            ele: '#kota-select',
+            options: [],
+            multiple: true,
+            placeholder: 'Pilih Kabupaten/Kota...',
+            noOptionsText: 'Pilih provinsi terlebih dahulu',
+            loadingText: 'Mengambil data kota...',
+            search: true
+        });
+
+        provSelect = document.querySelector('#provinsi-select');
+        kotaSelect = document.querySelector('#kota-select');
+
+        // 2. Ambil data Provinsi saat halaman dimuat
+        await loadProvinsi();
+
+        // 3. Event Listener untuk perubahan Provinsi
+        provSelect.addEventListener('change', async function() {
+            const selectedProvIds = provSelect.value;
+            const kotaVS = kotaSelect._virtualSelect || kotaSelect;
+
+            if (!selectedProvIds || selectedProvIds.length === 0) {
+                if (typeof kotaVS.setOptions === 'function') {
+                    kotaVS.setOptions([]);
+                }
+                return;
+            }
+
+            // Tampilkan loading
+            if (typeof kotaVS.toggleLoading === 'function') {
+                kotaVS.toggleLoading(true);
+            }
+
+            try {
+                // Ambil data kota untuk semua provinsi yang dipilih secara paralel
+                const allKotaData = await loadKotaMultiple(selectedProvIds);
+                if (typeof kotaVS.setOptions === 'function') {
+                    kotaVS.setOptions(allKotaData);
+                }
+            } catch (error) {
+                console.error("Gagal memuat kota:", error);
+            } finally {
+                if (typeof kotaVS.toggleLoading === 'function') {
+                    kotaVS.toggleLoading(false);
+                }
+            }
+        });
+    });
+
+    // Fungsi mengambil data Provinsi dari API
+    async function loadProvinsi() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/provinces.json`);
+            const data = await response.json();
+            
+            // Format ke label/value untuk Virtual Select
+            const options = data.map(item => ({
+                label: item.name,
+                value: item.id
+            }));
+
+            const provVS = provSelect._virtualSelect || provSelect;
+            if (typeof provVS.setOptions === 'function') {
+                provVS.setOptions(options);
+            }
+            
+            // Perbaikan: Jangan panggil setPlaceholder karena bukan fungsi standar. 
+            // Placeholder sudah diatur di VirtualSelect.init
+        } catch (error) {
+            console.error("Error load provinsi:", error);
+        }
+    }
+
+    // Fungsi mengambil data Kota untuk banyak provinsi (Grouping)
+    async function loadKotaMultiple(provIds) {
+        const ids = Array.isArray(provIds) ? provIds : [provIds];
+        
+        // Buat array promise untuk fetch paralel
+        const promises = ids.map(async (id) => {
+            try {
+                // Kita butuh nama provinsi untuk label grup
+                const provNameResponse = await fetch(`${API_BASE_URL}/province/${id}.json`);
+                const provInfo = await provNameResponse.json();
+
+                // Ambil data kabupaten/kota
+                const response = await fetch(`${API_BASE_URL}/regencies/${id}.json`);
+                const data = await response.json();
+
+                return {
+                    label: provInfo.name, // Nama Provinsi sebagai Judul Grup
+                    options: data.map(item => ({
+                        label: item.name,
+                        value: item.id
+                    }))
+                };
+            } catch (e) {
+                console.error(`Gagal mengambil kota untuk prov ${id}:`, e);
+                return null;
+            }
+        });
+
+        const results = await Promise.all(promises);
+        return results.filter(item => item !== null);
+    }
+
+    function tampilkanHasil() {
+        // Akses instance VS secara aman
+        const provVS = provSelect._virtualSelect || provSelect;
+        const kotaVS = kotaSelect._virtualSelect || kotaSelect;
+
+        if (!provVS.getSelectedOptions || !kotaVS.getSelectedOptions) return;
+
+        const provNames = provVS.getSelectedOptions().map(o => o.label);
+        const kotaNames = kotaVS.getSelectedOptions().map(o => o.label);
+        const output = document.getElementById('output-data');
+
+        if (kotaNames.length === 0) {
+            output.innerHTML = `<span class="text-danger">Pilih provinsi dan kabupaten/kota terlebih dahulu.</span>`;
+            return;
+        }
+
+        output.innerHTML = `
+            <strong>Provinsi:</strong> ${provNames.join(', ')} <br>
+            <strong>Kabupaten/Kota:</strong> ${kotaNames.join(', ')}
+        `;
+    }
+
+    function resetFilter() {
+        const provVS = provSelect._virtualSelect || provSelect;
+        const kotaVS = kotaSelect._virtualSelect || kotaSelect;
+
+        if (provVS && typeof provVS.reset === 'function') provVS.reset();
+        if (kotaVS) {
+            if (typeof kotaVS.setOptions === 'function') {
+                kotaVS.setOptions([]);
+            }
+            if (typeof kotaVS.reset === 'function') {
+                kotaVS.reset();
+            }
+        }
+        document.getElementById('output-data').innerHTML = '<span class="text-muted">Belum ada data yang dipilih.</span>';
+    }
+</script>
+
+</body>
+</html>
