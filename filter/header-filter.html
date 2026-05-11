@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parameter Pencarian Grid - Responsif</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Container Styling */
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* Header Area */
+        .filter-header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        /* Collapsible Section */
+        #filterContent {
+            max-height: 1000px; /* Nilai besar agar bisa menampung konten */
+            transition: max-height 0.4s ease-out, opacity 0.3s ease;
+            opacity: 1;
+            padding: 1.5rem;
+        }
+
+        #filterContent.hidden {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #4a5568;
+        }
+
+        .btn-filter-toggle {
+            background-color: var(--bg-light);
+            border: 1px solid #dee2e6;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-filter-toggle:hover {
+            background-color: #e9ecef;
+        }
+
+        .grid-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+
+        /* Custom Transition for Icon Rotation */
+        .rotate-icon {
+            transition: transform 0.3s ease;
+        }
+        .rotated {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+            
+            <!-- Search & Filter Card -->
+            <div class="search-container">
+                <div class="filter-header">
+                    <h5 class="mb-0"><i class="bi bi-table me-2"></i>Daftar Inventaris</h5>
+                    <div class="d-flex gap-2">
+                        <!-- Tombol Toggle Filter -->
+                        <button class="btn btn-filter-toggle" id="toggleBtn">
+                            <i class="bi bi-sliders2"></i>
+                            <span>Filter</span>
+                            <i class="bi bi-chevron-down rotate-icon" id="chevronIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Konten Filter yang bisa disembunyikan -->
+                <div id="filterContent">
+                    <div class="row g-3">
+                        <!-- Kata Kunci -->
+                        <div class="col-md-4">
+                            <label class="form-label">Cari Produk</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control border-start-0" placeholder="Nama barang atau SKU...">
+                            </div>
+                        </div>
+
+                        <!-- Kategori -->
+                        <div class="col-md-3">
+                            <label class="form-label">Kategori</label>
+                            <select class="form-select">
+                                <option selected>Semua Kategori</option>
+                                <option value="1">Elektronik</option>
+                                <option value="2">Pakaian</option>
+                                <option value="3">Furniture</option>
+                            </select>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-3">
+                            <label class="form-label">Status Stok</label>
+                            <select class="form-select">
+                                <option selected>Semua Status</option>
+                                <option value="1">Tersedia</option>
+                                <option value="2">Hampir Habis</option>
+                                <option value="3">Kosong</option>
+                            </select>
+                        </div>
+
+                        <!-- Harga -->
+                        <div class="col-md-2">
+                            <label class="form-label">Urutkan</label>
+                            <select class="form-select">
+                                <option value="new">Terbaru</option>
+                                <option value="price_low">Harga Terendah</option>
+                                <option value="price_high">Harga Tertinggi</option>
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+                            <button class="btn btn-light border" id="resetBtn">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            </button>
+                            <button class="btn btn-primary px-4">
+                                Terapkan Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Preview Area -->
+            <div class="row g-4" id="gridDisplay">
+                <!-- Contoh Data Grid -->
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="grid-item text-center">
+                        <div class="bg-light rounded p-4 mb-3">
+                            <i class="bi bi-laptop display-6 text-primary"></i>
+                        </div>
+                        <h6 class="mb-1">MacBook Pro M2</h6>
+                        <p class="text-muted small mb-2">ELE-001</p>
+                        <span class="status-badge bg-success-subtle text-success">Tersedia</span>
+                        <div class="mt-3 fw-bold">Rp 24.500.000</div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="grid-item text-center">
+                        <div class="bg-light rounded p-4 mb-3">
+                            <i class="bi bi-phone display-6 text-primary"></i>
+                        </div>
+                        <h6 class="mb-1">iPhone 15 Pro</h6>
+                        <p class="text-muted small mb-2">ELE-042</p>
+                        <span class="status-badge bg-warning-subtle text-warning">Terbatas</span>
+                        <div class="mt-3 fw-bold">Rp 19.200.000</div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="grid-item text-center">
+                        <div class="bg-light rounded p-4 mb-3">
+                            <i class="bi bi-mouse3 display-6 text-primary"></i>
+                        </div>
+                        <h6 class="mb-1">Logitech MX Master</h6>
+                        <p class="text-muted small mb-2">ACC-091</p>
+                        <span class="status-badge bg-danger-subtle text-danger">Kosong</span>
+                        <div class="mt-3 fw-bold">Rp 1.450.000</div>
+                    </div>
+                </div>
+                
+                <div class="col-sm-6 col-md-4 col-lg-3">
+                    <div class="grid-item text-center">
+                        <div class="bg-light rounded p-4 mb-3">
+                            <i class="bi bi-keyboard display-6 text-primary"></i>
+                        </div>
+                        <h6 class="mb-1">Keychron K2 V2</h6>
+                        <p class="text-muted small mb-2">ACC-102</p>
+                        <span class="status-badge bg-success-subtle text-success">Tersedia</span>
+                        <div class="mt-3 fw-bold">Rp 1.200.000</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('toggleBtn');
+        const filterContent = document.getElementById('filterContent');
+        const chevronIcon = document.getElementById('chevronIcon');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Fungsi untuk menyembunyikan/menampilkan filter
+        toggleBtn.addEventListener('click', function() {
+            filterContent.classList.toggle('hidden');
+            chevronIcon.classList.toggle('rotated');
+        });
+
+        // Contoh fungsi reset sederhana
+        resetBtn.addEventListener('click', function() {
+            const inputs = filterContent.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if(input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                } else {
+                    input.value = '';
+                }
+            });
+            console.log('Filter dikosongkan');
+        });
+    });
+</script>
+
+</body>
+</html>
